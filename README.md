@@ -10,19 +10,6 @@ To run unit test:
 morty.py -u
 -> run with two files unit_test_1.txt and unit_test_2.txt within the same folder as morty.py
 
-		cat unit_test_1.txt
-		AAA 	1
-		BBB		1
-		CCC 	1
-
-		cat unit_test_2.txt
-
-		DDD 	1
-		EEE		1
-		FFF 	1
-
-
-
 To do in v10:
 -> There is a significant speed up to be made when calculating alpha dn beta diversity,  by doing the following:
 Start calculating similarity matrix for beta diversity between two repertoires (R1 and R2; disjoint). While calculating similarity matrix, once you have reached the end of R1 check if the alpha diversity of R1 is to be calculated. If so, get the indices  of similarity matrixrelevant to R1 (i.e. ignore the similarity between R1 and R2 seqs) and throw it at the alpha diversity calculation , get the result and print it. Do the ssame for R2. If there are common seqs, book-keeping becomes slightl;y more complicated, but manageable.
