@@ -1,10 +1,12 @@
 """
 Attributions:
+
 - add_column_placeholders, parse_file_contents, ends_are_ok, extract_cdr3 and convert_fasta (with modification by Harry M. Burke) from Arnaout lab [Ramy Arnaout & Rohit Arora]
 - create_recon_input_from_file, check_file_overlap, recon_pipeline, run_recon_analyses, test_resample, and separate_data_files written by Harry M. Burke as part of Arnaout lab.
 - Run this script from within the same folder as recon_v2.5.py.
 - You need provided style.css, plot_clone_size_distribution_ref.js (rename the file if necessary), d3.js,  error_bar_parameters.txt, and simlib.cpython-38-darwin.so on your desktop.
 - Raw data folders should have no extraneous files in them aside from _recon.txt files.
+- To compile simlib.pyx (cython file), run setup.py. The output compiled file you need to run is simile.cpython-38-darwin.so which is in the morty directory.
 
 To run unit test:
 morty.py -u
