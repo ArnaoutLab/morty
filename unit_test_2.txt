@@ -1,0 +1,3 @@
+DDD	1
+EEE	1
+FFF	1
