@@ -769,8 +769,8 @@ if __name__ == '__main__':
 	run_id = ''.join(choice(ascii_letters + digits) for i in range(5))
 	if verbose: print(("run_id = %s" % run_id))
 
-	results_dir = "%sBeta_diversity_results" % dir_name
-	if not os.path.isdir(results_dir): os.mkdir(results_dir)
+	# results_dir = "%sBeta_diversity_results" % dir_name
+	# if not os.path.isdir(results_dir): os.mkdir(results_dir)
 
 	# Process list of qs
 	list_of_qs = list_of_qs.replace("inf", "float('inf')")
@@ -811,7 +811,9 @@ if __name__ == '__main__':
 	if alpha_diversity:
 		if verbose: print("Calculating alpha diversity")
 
-		all_alpha_diversity_results = generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, alpha_or_beta="alpha")
+		distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
+		
+		all_alpha_diversity_results = generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha")
 
 
 		outstr_alpha = ''
