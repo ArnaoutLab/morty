@@ -747,7 +747,7 @@ if __name__ == '__main__':
 
 		master_output_dirs = [expanduser("~") + "/Dropbox (ArnaoutLab)/Harry/repo/Python scripts/", "/n/data2/bidmc/path/arnaout/", expanduser("~") + "/Desktop/Morty"]
 		master_output_dir_which_exist = [i for i in master_output_dirs if os.path.isdir(i)]
-		# master_output_dir = master_output_dir_which_exist[0]
+		master_output_dir = master_output_dir_which_exist[0]
 		if len(master_output_dir_which_exist) == 0:
 			print("Provide path to master output files. Exiting...")
 			exit()
@@ -757,7 +757,9 @@ if __name__ == '__main__':
 
 	recon_files_list = recon_files.split(',')
 	repertoire_names_list = repertoire_names.split(',')
+	print("repertoire_names_list = ", repertoire_names_list)
 	input_files_list = input_files.split(',')
+	print("input_files_list = ", input_files_list)
 
 	set_cython_seed(randint(0, 2147483647)) # This is cython RAND_MAX
 
@@ -781,7 +783,8 @@ if __name__ == '__main__':
 	recon_file_to_repertoire_name = list(zip(repertoire_names_list, input_files_list))
 
 	if not alpha_diversity_repertoires: alpha_diversity_repertoires_list = repertoire_names_list
-	else: alpha_diversity_repertoires_list = alpha_diversity_repertoires.split()
+	else: alpha_diversity_repertoires_list = alpha_diversity_repertoires.split(",")
+	print("alpha_diversity_repertoires_list = ", alpha_diversity_repertoires_list)
 
 	"""get column names for d numbers"""
 	col_names_for_qs = []
