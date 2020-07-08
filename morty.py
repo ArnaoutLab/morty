@@ -948,6 +948,3 @@ if __name__ == '__main__':
 
 	print(); print((strftime("%Y-%m-%d %H:%M:%S")))
 	if verbose: print(("# time_taken\t%.2fs" % (time() - start_time)))
-
-
-
