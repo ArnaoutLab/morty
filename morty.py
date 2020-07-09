@@ -288,7 +288,6 @@ def run_alpha_unit_test(input_files_list, repertoire_names_list, dir_name, list_
 	return
 
 
-# def read_species_count_input(infile):
 def read_species_count_input(input_files_list):
 	d = defaultdict(float)
 	non_unique_cdr3s_flag = True # initialize
@@ -757,9 +756,7 @@ if __name__ == '__main__':
 
 	recon_files_list = recon_files.split(',')
 	repertoire_names_list = repertoire_names.split(',')
-	print("repertoire_names_list = ", repertoire_names_list)
 	input_files_list = input_files.split(',')
-	print("input_files_list = ", input_files_list)
 
 	set_cython_seed(randint(0, 2147483647)) # This is cython RAND_MAX
 
@@ -784,7 +781,7 @@ if __name__ == '__main__':
 
 	if not alpha_diversity_repertoires: alpha_diversity_repertoires_list = repertoire_names_list
 	else: alpha_diversity_repertoires_list = alpha_diversity_repertoires.split(",")
-	print("alpha_diversity_repertoires_list = ", alpha_diversity_repertoires_list)
+	# print("alpha_diversity_repertoires_list = ", alpha_diversity_repertoires_list)
 
 	"""get column names for d numbers"""
 	col_names_for_qs = []
@@ -825,7 +822,7 @@ if __name__ == '__main__':
 			functional_alpha_diversity_results, raw_alpha_diversity_results = all_alpha_diversity_results[repertoire_]
 				
 			functional_alpha_diversity_results = { str(q)+"Ds" : "%.3e"%functional_alpha_diversity_results[q] for q in list(functional_alpha_diversity_results.keys()) }
-			raw_alpha_diversity_results = { str(q)+"Ds" : "%.3e"%raw_alpha_diversity_results[q] for q in list(raw_alpha_diversity_results.keys()) }
+			raw_alpha_diversity_results = { str(q)+"D" : "%.3e"%raw_alpha_diversity_results[q] for q in list(raw_alpha_diversity_results.keys()) }
 
 			outstr_alpha += "%s\talpha\t%s\t" % (run_id, repertoire_)
 			class_vals = "(%s" % functional_alpha_diversity_results
