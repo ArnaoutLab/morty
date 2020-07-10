@@ -146,9 +146,6 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 	if clone_distribution_in_file: clone_distribution_option = "-c"
 	else: clone_distribution_option = ""
 
-
-	#recon_cmd_1 = "python3 recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
-	#recon_cmd_2 = "python3 recon_v2.5.py -D -Q %s -b error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), recon_out_file_2, recon_out_file_1)
 	recon_cmd_1 = "recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
 	recon_cmd_2 = "recon_v2.5.py -D -Q %s -b %s/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), path_to_source, recon_out_file_2, recon_out_file_1)
 
@@ -197,9 +194,6 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 		
 
 def run_beta_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=False, given_similarity_matrix=None, unit_test=False):
-
-	
-	# functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method,  has_similarity_matrix=True, given_similarity_matrix=similarity_matrix_for_beta_diversity, unit_test=unit_test)
 
 	functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=True, given_similarity_matrix=similarity_matrix_for_beta_diversity, unit_test=unit_test)
 
