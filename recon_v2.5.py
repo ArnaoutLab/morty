@@ -1,3 +1,4 @@
+#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 
 from argparse import ArgumentParser, REMAINDER, RawDescriptionHelpFormatter

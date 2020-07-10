@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
 
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from ast import literal_eval
@@ -144,12 +146,14 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 	if clone_distribution_in_file: clone_distribution_option = "-c"
 	else: clone_distribution_option = ""
 
-	recon_cmd_1 = "python3 recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
-	recon_cmd_2 = "python3 recon_v2.5.py -D -Q %s -b error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), recon_out_file_2, recon_out_file_1)	
+
+	#recon_cmd_1 = "python3 recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
+	#recon_cmd_2 = "python3 recon_v2.5.py -D -Q %s -b error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), recon_out_file_2, recon_out_file_1)
+	recon_cmd_1 = "recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
+	recon_cmd_2 = "recon_v2.5.py -D -Q %s -b %s/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), path_to_source, recon_out_file_2, recon_out_file_1)
 
 	screen_out_1 = subprocess.getoutput(recon_cmd_1)
 	screen_out_2 = subprocess.getoutput(recon_cmd_2)
-
 
 	with open(recon_out_file_2) as f:
 		for line in f:
@@ -728,6 +732,7 @@ if __name__ == '__main__':
 	date_ = strftime("%Y-%m-%d %H:%M:%S")
 	print(); print((strftime("%Y-%m-%d %H:%M:%S"))); print()
 	start_time = time()
+	path_to_source, source_file_python = os.path.split(__file__)
 
 	alpha_diversity=False
 	beta_diversity=False
@@ -766,10 +771,8 @@ if __name__ == '__main__':
 	if not dir_name.endswith("/"): dir_name = dir_name+"/"
 
 	run_id = ''.join(choice(ascii_letters + digits) for i in range(5))
-	if verbose: print(("run_id = %s" % run_id))
-
-	# results_dir = "%sBeta_diversity_results" % dir_name
-	# if not os.path.isdir(results_dir): os.mkdir(results_dir)
+	if verbose:
+		print(("run_id:\t%s" % run_id))
 
 	# Process list of qs
 	list_of_qs = list_of_qs.replace("inf", "float('inf')")
@@ -781,7 +784,6 @@ if __name__ == '__main__':
 
 	if not alpha_diversity_repertoires: alpha_diversity_repertoires_list = repertoire_names_list
 	else: alpha_diversity_repertoires_list = alpha_diversity_repertoires.split(",")
-	# print("alpha_diversity_repertoires_list = ", alpha_diversity_repertoires_list)
 
 	"""get column names for d numbers"""
 	col_names_for_qs = []
@@ -838,6 +840,7 @@ if __name__ == '__main__':
 		if os.path.isfile(master_filename_alpha): action_ = 'a'
 		else: action_ = 'w'
 		with open(master_filename_alpha, action_) as f: f.write(outstr_alpha_measures)
+		print("Output for run %s written to:\t%s" % (run_id, master_filename_alpha))
 		
 	if beta_diversity:
 		if verbose: 
@@ -947,6 +950,7 @@ if __name__ == '__main__':
 		if os.path.isfile(master_filename_beta): action_ = 'a'
 		else: action_ = 'w'
 		with open(master_filename_beta, action_) as f: f.write(outstr_beta_measures)
+		print("Output for run %s written to:\t%s" % (run_id, master_filename_beta))
 
 	print(); print((strftime("%Y-%m-%d %H:%M:%S")))
 	if verbose: print(("# time_taken\t%.2fs" % (time() - start_time)))
