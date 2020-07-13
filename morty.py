@@ -146,10 +146,28 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 	if clone_distribution_in_file: clone_distribution_option = "-c"
 	else: clone_distribution_option = ""
 
-	recon_cmd_1 = "recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
-	recon_cmd_2 = "recon_v2.5.py -D -Q %s -b %s/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), path_to_source, recon_out_file_2, recon_out_file_1)
+	# recon_cmd_1 = "recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
+	# recon_cmd_2 = "recon_v2.5.py -D -Q %s -b %s/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), path_to_source, recon_out_file_2, recon_out_file_1)
+
+	recon_cmd_1 = "recon_v3.0.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
+	# recon_cmd_2 = "recon_v3.0.py -D -Q %s -b %s/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), path_to_source, recon_out_file_2, recon_out_file_1)
+	
+	which_recon = subprocess.getoutput("which recon_v3.0.py")
+	recon_path, _ = os.path.split(which_recon)
+
+	recon_cmd_2 = "recon_v3.0.py -D -Q %s -b '%s'/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), recon_path, recon_out_file_2, recon_out_file_1)
 
 	screen_out_1 = subprocess.getoutput(recon_cmd_1)
+
+	"""If recon is not found then print the error message and exit gracefully"""
+	if "command not found" in screen_out_1:
+		error_message = ''
+		error_message += "\nRecon is either not installed or not in user's PATH. To fix this:\n"
+		error_message += "(i) Download Recon from here: https://github.com/ArnaoutLab/Recon\n"
+		error_message += "(ii) Add it your PATH"
+		print(error_message)
+		exit()
+	
 	screen_out_2 = subprocess.getoutput(recon_cmd_2)
 
 	with open(recon_out_file_2) as f:
@@ -726,7 +744,7 @@ if __name__ == '__main__':
 	date_ = strftime("%Y-%m-%d %H:%M:%S")
 	print(); print((strftime("%Y-%m-%d %H:%M:%S"))); print()
 	start_time = time()
-	path_to_source, source_file_python = os.path.split(__file__)
+	# path_to_source, source_file_python = os.path.split(__file__)
 
 	alpha_diversity=False
 	beta_diversity=False
@@ -742,13 +760,8 @@ if __name__ == '__main__':
 
 	# Set output files
 	if not master_output_dir:
-
-		master_output_dirs = [expanduser("~") + "/Dropbox (ArnaoutLab)/Harry/repo/Python scripts/", "/n/data2/bidmc/path/arnaout/", expanduser("~") + "/Desktop/Morty"]
-		master_output_dir_which_exist = [i for i in master_output_dirs if os.path.isdir(i)]
-		master_output_dir = master_output_dir_which_exist[0]
-		if len(master_output_dir_which_exist) == 0:
-			print("Provide path to master output files. Exiting...")
-			exit()
+		print("Provide path to master output files (--master_output_dir/-mod)\nExiting...")
+		exit()
 
 	master_filename_beta = "%s/%s" % (master_output_dir, master_filename_beta)
 	master_filename_alpha = "%s/%s" % (master_output_dir, master_filename_alpha)
