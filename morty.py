@@ -292,6 +292,7 @@ def read_species_count_input(input_files_list):
 	with open(input_files_list) as f:
 		for line in f:
 			if line.startswith('#') or line.strip() == '': continue
+			if 'cdr3_aa' in line: continue
 			try:
 				cdr3, no = (line.strip()).split('\t')
 			except ValueError:
@@ -307,6 +308,7 @@ def read_clone_size_distribution_input(infile):
 	with open(infile) as f:
 		for line in f:			
 			if line.startswith('#') or line.strip() == '': continue
+			if 'cdr3_aa' in line: continue
 			try: 
 				clone_size, no = line.rstrip('\n').split('\t')
 			except ValueError:
