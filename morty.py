@@ -17,7 +17,6 @@ from simlib import stochastic_similarity, set_cython_seed, fast_similarity
 from string import *
 from sys import argv, exit
 from time import time, sleep, strftime
-
 import numpy as np
 import os
 import subprocess
@@ -61,7 +60,6 @@ def get_distance_to_similarity_list(cost, method):
 	return distance_to_similarity_list
 	
 
-# def calculate_similarity(seq_1, seq_2, distance_to_similarity_list=distance_to_similarity_list, method="fast_similarity"):
 def calculate_similarity(seq_1, seq_2, cost, method, distance_to_similarity_list):
 	
 	"""type : fast_similarity vs. old_similarity"""
@@ -92,10 +90,10 @@ def calculate_similarity_BAK(seq_1, seq_2, method="fast_similarity"):
 		return old_similarity(x)
 
 
-def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, given_similarity_matrix=None):
+def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None):
 
 	if has_similarity_matrix:
-		similarity_list = given_similarity_matrix
+		similarity_list = user_similarity_matrix
 
 	else:
 		similarity_list = get_similarity_matrix(unique_seqs_from_this_repertoires, cost, method, distance_to_similarity_list)
@@ -146,12 +144,8 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 	if clone_distribution_in_file: clone_distribution_option = "-c"
 	else: clone_distribution_option = ""
 
-	# recon_cmd_1 = "recon_v2.5.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
-	# recon_cmd_2 = "recon_v2.5.py -D -Q %s -b %s/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), path_to_source, recon_out_file_2, recon_out_file_1)
-
 	recon_cmd_1 = "recon_v3.0.py -R %s -t 30 -l 50 -o '%s' '%s'" % (clone_distribution_option, recon_out_file_1, recon_file_for_this_repertoire)
-	# recon_cmd_2 = "recon_v3.0.py -D -Q %s -b %s/error_bar_parameters.txt -o %s %s" % (" ".join(list_of_qs_for_recon), path_to_source, recon_out_file_2, recon_out_file_1)
-	
+
 	which_recon = subprocess.getoutput("which recon_v3.0.py")
 	recon_path, _ = os.path.split(which_recon)
 
@@ -211,9 +205,9 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 	return class_alpha_diversity_results_list, raw_alpha_diversity_results_list
 		
 
-def run_beta_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=False, given_similarity_matrix=None, unit_test=False):
+def run_beta_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=False, user_similarity_matrix=None, unit_test=False):
 
-	functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=True, given_similarity_matrix=similarity_matrix_for_beta_diversity, unit_test=unit_test)
+	functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=True, user_similarity_matrix=similarity_matrix_for_beta_diversity, unit_test=unit_test)
 
 	print("\nTesting functional beta diversity...")
 	print()
@@ -287,11 +281,11 @@ def run_beta_unit_test(input_files_list, repertoire_names_list, dir_name, list_o
 			exit()
 	return
 
-def run_alpha_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, distance_to_similarity_list, has_similarity_matrix=False, given_similarity_matrix=None, unit_test=False):
+def run_alpha_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, distance_to_similarity_list, has_similarity_matrix=False, user_similarity_matrix=None, unit_test=False):
 	print("-------------------------------------------------------")
 	print("\n\nTesting functional alpha diversity...")
 
-	all_alpha_diversity_results = generate_final_alpha_diversity_output(repertoire_names_list, input_files_list, repertoire_names_list, input_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=True, given_similarity_matrix=similarity_matrix_for_alpha_diversity)
+	all_alpha_diversity_results = generate_final_alpha_diversity_output(repertoire_names_list, input_files_list, repertoire_names_list, input_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=True, user_similarity_matrix=similarity_matrix_for_alpha_diversity)
 
 	for i, (j1, j2) in list(all_alpha_diversity_results.items()):
 		print(("\n\n\trepertoire\t%s" % i))
@@ -458,7 +452,7 @@ def calculate_rho_bar_term(P_bar_ij, relative_uniqueness_i, q):
 	return rho_bar_term_for_i
 
 
-def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, given_similarity_matrix=None):
+def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None):
 	
 	"""Returns a tuple of rho and beta bars for individual repertoires"""
 
@@ -494,8 +488,10 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 	if diversity_type=="class":
 		if has_similarity_matrix: 
 			print("has_similarity_matrix is TRUE")
-			similarity_matrix = given_similarity_matrix
-		else: similarity_matrix = get_similarity_matrix(unique_seqs_from_all_repertoires, cost, method, distance_to_similarity_list)
+			similarity_matrix = user_similarity_matrix
+		else:
+			similarity_matrix = get_similarity_matrix(unique_seqs_from_all_repertoires, cost, method, distance_to_similarity_list)
+			print("similarity_matrix = ", similarity_matrix)
 	
 	if diversity_type == "raw":
 		for ii in range(len(p)):
@@ -569,7 +565,7 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 
 
 
-def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=False, given_similarity_matrix=None):
+def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=False, user_similarity_matrix=None):
 
 	all_alpha_diversity_results = {}
 
@@ -587,7 +583,7 @@ def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, inpu
 
 		p = np.empty(len(unique_seqs_from_this_repertoires), )
 
-		class_alpha_diversity_results_list, raw_alpha_diversity_results_list = calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=has_similarity_matrix, given_similarity_matrix=given_similarity_matrix)
+		class_alpha_diversity_results_list, raw_alpha_diversity_results_list = calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
 
 		all_alpha_diversity_results[alpha_diversity_repertoire] = ( class_alpha_diversity_results_list, raw_alpha_diversity_results_list )
 		
@@ -599,7 +595,7 @@ def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, inpu
 	return all_alpha_diversity_results
 
 
-def generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, given_similarity_matrix=None, unit_test=False):
+def generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None, unit_test=False):
 	"""
 	Returns all the beta diversity parameters: B_bar, R_bar, beta_bar, rho_bar, raw_B_bar, raw_R_bar, raw_beta_bar, raw_rho_bar
 	"""
@@ -611,7 +607,7 @@ def generate_final_beta_diversity_output(input_files_list, repertoire_names_list
 	"""Functional Diversity"""
 	if verbose: print("\nfunctional beta diversity")
 
-	rho_bar_for_all_repertoires_for_all_qs, beta_bar_for_all_repertoires_for_all_qs, weighted_rho_bar_for_all_qs, weighted_beta_bar_for_all_qs = calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type=diversity_type, has_similarity_matrix=has_similarity_matrix, given_similarity_matrix=given_similarity_matrix)
+	rho_bar_for_all_repertoires_for_all_qs, beta_bar_for_all_repertoires_for_all_qs, weighted_rho_bar_for_all_qs, weighted_beta_bar_for_all_qs = calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type=diversity_type, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
 
 	B_bar, R_bar = [ {} for i in range(2) ]
 	beta_bar, rho_bar  = [ defaultdict(lambda: defaultdict(list)) for i in range(2) ]
@@ -643,7 +639,6 @@ def generate_final_beta_diversity_output(input_files_list, repertoire_names_list
 
 
 
-
 """MAIN"""
 
 if __name__ == '__main__':
@@ -670,6 +665,7 @@ if __name__ == '__main__':
 	pa("-u", "--unit_test", action="store_true", help="run unit tests")
 	pa("-v", "--verbose", action="store_true", help="be verbose")
 	pa("-weights", "--weights", type=str, default= "[0.5, 0.5]", help="list of weights for r1 and r2")
+	pa("-Z", "--user_similarity_matrix_file", type=str, default=None, help="Numpy file (.npy format) containing user similarity matrix")
 
 	args = parser.parse_args()
 	globals().update(vars(args))
@@ -737,19 +733,20 @@ if __name__ == '__main__':
 
 		distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
 
-		run_beta_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=True, given_similarity_matrix=similarity_matrix_for_beta_diversity, unit_test=unit_test)
+		run_beta_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=True, user_similarity_matrix=similarity_matrix_for_beta_diversity, unit_test=unit_test)
 
-		run_alpha_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, distance_to_similarity_list, has_similarity_matrix=True, given_similarity_matrix=similarity_matrix_for_alpha_diversity, unit_test=unit_test)
+		run_alpha_unit_test(input_files_list, repertoire_names_list, dir_name, list_of_qs, distance_to_similarity_list, has_similarity_matrix=True, user_similarity_matrix=similarity_matrix_for_alpha_diversity, unit_test=unit_test)
 
 		exit()
+		"""End unit test"""
 
 	date_ = strftime("%Y-%m-%d %H:%M:%S")
 	print(); print((strftime("%Y-%m-%d %H:%M:%S"))); print()
 	start_time = time()
-	# path_to_source, source_file_python = os.path.split(__file__)
 
 	alpha_diversity=False
 	beta_diversity=False
+	has_similarity_matrix=False
 
 	if mode=="alpha": alpha_diversity=True
 	elif mode=="beta": beta_diversity=True
@@ -759,6 +756,11 @@ if __name__ == '__main__':
 	else:
 		print("Specify mode. Exiting...")
 		exit()
+
+	if user_similarity_matrix:
+		print("User similarity matrix file:%s" % user_similarity_matrix_file)
+		has_similarity_matrix=True
+		user_similarity_matrix = np.load(user_similarity_matrix_file)
 
 	# Set output files
 	if not master_output_dir:
@@ -824,7 +826,7 @@ if __name__ == '__main__':
 
 		distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
 		
-		all_alpha_diversity_results = generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha")
+		all_alpha_diversity_results = generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
 
 
 		outstr_alpha = ''
@@ -864,7 +866,7 @@ if __name__ == '__main__':
 		
 		distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
 		
-		functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs_beta, cost, method, distance_to_similarity_list)
+		functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, dir_name, list_of_qs_beta, cost, method, distance_to_similarity_list, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
 
 		functional_B_bar = { str(q)+"Ds" : "%.3e"%functional_B_bar[q] for q in list(functional_B_bar.keys()) }
 		functional_R_bar = { str(q)+"Ds" : "%.3e"%functional_R_bar[q] for q in list(functional_R_bar.keys()) }
