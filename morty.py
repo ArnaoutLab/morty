@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from argparse import ArgumentParser, RawDescriptionHelpFormatter, RawTextHelpFormatter
 from ast import literal_eval
 from collections import Counter, defaultdict
 from functools import reduce
@@ -20,6 +20,8 @@ from time import time, sleep, strftime
 import numpy as np
 import os
 import subprocess
+import importlib
+
 
 """ FUNCTIONS """
 
@@ -35,7 +37,6 @@ def prod(iterable):
 
 
 def old_similarity(average_length, x):
-	# average_length = (len(seq_1)+len(seq_2))/2.
 	raised_expression = (4./average_length) * x
 	old_similarity_measure = 0.1**raised_expression
 	return old_similarity_measure
@@ -47,9 +48,9 @@ def get_distance_to_similarity_list(cost, method):
 		distance_to_similarity_list = [fast_similarity(x, cost) for x in range(max_possible_distance)]
 
 	elif method == "old_similarity":
-		# Note below distance_to_similarity_list is a 2D matrix: distance_to_similarity_list[distance][average_length]
-		# could also be made a dictionary; an array is probably fastest but this is a list of lists
-		# we don't think we'll be using this often
+		"""Note below distance_to_similarity_list is a 2D matrix: distance_to_similarity_list[distance][average_length]
+		could also be made a dictionary; an array is probably fastest but this is a list of lists
+		we don't think we'll be using this often"""
 		average_lengths = arange(0, max_possible_distance, 0.5)
 		distance_to_similarity_list = []
 		for x in range(max_possible_distance):
@@ -62,9 +63,7 @@ def get_distance_to_similarity_list(cost, method):
 
 def calculate_similarity(seq_1, seq_2, cost, method, distance_to_similarity_list):
 	
-	"""type : fast_similarity vs. old_similarity"""
-
-	# distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
+	"""Type : fast_similarity vs. old_similarity"""
 	
 	if method=="fast_similarity":
 		return distance_to_similarity_list[distance(seq_1, seq_2)]
@@ -75,25 +74,27 @@ def calculate_similarity(seq_1, seq_2, cost, method, distance_to_similarity_list
 		return distance_to_similarity_list[x][average_length]
 
 
+# def calculate_similarity_BAK(seq_1, seq_2, method="fast_similarity"):
 
-def calculate_similarity_BAK(seq_1, seq_2, method="fast_similarity"):
-
-	"""type : fast_similarity vs. old_similarity"""
+# 	"""Type : fast_similarity vs. old_similarity"""
 	
-	x = distance(seq_1, seq_2) # edit distance
+# 	x = distance(seq_1, seq_2) # edit distance
 	
-	if method == "fast_similarity": # see log Harry Burke log.rtfd entry 080518RO
-		return fast_similarity(x, cost) # Normally this function would accept arguments x and kappa but in simlib, kappa=0.51 by default.
+# 	if method == "fast_similarity": # see log Harry Burke log.rtfd entry 080518RO
+# 		return fast_similarity(x, cost) # Normally this function would accept arguments x and kappa but in simlib, kappa=0.51 by default.
 	
-	elif method == "old_similarity":
-		average_length = (len(seq_1)+len(seq_2))/2.
-		return old_similarity(x)
+# 	elif method == "old_similarity":
+# 		average_length = (len(seq_1)+len(seq_2))/2.
+# 		return old_similarity(x)
 
 
-def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None):
+def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None, custom_function=None):
 
 	if has_similarity_matrix:
 		similarity_list = user_similarity_matrix
+	
+	elif custom_function:
+		similarity_list = custom_function(unique_seqs_from_this_repertoires)
 
 	else:
 		similarity_list = get_similarity_matrix(unique_seqs_from_this_repertoires, cost, method, distance_to_similarity_list)
@@ -157,8 +158,8 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 	if "command not found" in screen_out_1:
 		error_message = ''
 		error_message += "\nRecon is either not installed or not in user's PATH. To fix this:\n"
-		error_message += "(i) Download Recon from here: https://github.com/ArnaoutLab/Recon\n"
-		error_message += "(ii) Add it your PATH"
+		error_message += "i\tDownload Recon from here: https://github.com/ArnaoutLab/Recon\n"
+		error_message += "ii\tAdd it your PATH"
 		print(error_message)
 		exit()
 	
@@ -174,8 +175,7 @@ def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_t
 					list_of_column_name_indices[ind] = li
 				break
 
-	""" keys of this dict are ints, so we can arrange them """
-
+	""" Keys of this dict are ints, so we can arrange them """
 	indices, col_names = list(zip(*sorted(list_of_column_name_indices.items())))
 	est_col_names = [i for i in col_names if "est_" in i and ('+' not in i and '-' not in i)]
 
@@ -212,31 +212,31 @@ def run_beta_unit_test(input_files_list, repertoire_names_list, list_of_qs, cost
 	print("\nTesting functional beta diversity...\n")
 
 	print("\tbeta_bar")
-	for reperoire_ in repertoire_names_list:
+	for repertoire_ in repertoire_names_list:
 		for q in list_of_qs:
-			if "%.3f" % functional_beta_bar[reperoire_][q] == '0.976': print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+			if "%.3f" % functional_beta_bar[repertoire_][q] == '0.976': print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 			else:
 				print("functional_beta_bar incorrect. Exiting...")
 				exit()
 
 	print("\n\n\trho_bar")
-	for reperoire_ in repertoire_names_list:
+	for repertoire_ in repertoire_names_list:
 		for q in list_of_qs:
-			if "%.3f" % functional_rho_bar[reperoire_][q] == '1.025':print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+			if "%.3f" % functional_rho_bar[repertoire_][q] == '1.025':print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 			else:
 				print("functional_rho_bar incorrect. Exiting...")
 				exit()
 		
 	print("\n\n\tB_bar")
 	for q in list_of_qs:
-		if "%.3f" % functional_B_bar[q] == '0.976': print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+		if "%.3f" % functional_B_bar[q] == '0.976': print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 		else:
 			print("functional_B_bar incorrect. Exiting...")
 			exit()
 
 	print("\n\n\tR_bar")
 	for q in list_of_qs:
-		if "%.3f" % functional_R_bar[q] == '1.025': print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+		if "%.3f" % functional_R_bar[q] == '1.025': print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 		else:
 			print("functional_R_bar incorrect. Exiting...")
 			exit()
@@ -248,33 +248,33 @@ def run_beta_unit_test(input_files_list, repertoire_names_list, list_of_qs, cost
 	raw_B_bar, raw_R_bar, raw_beta_bar, raw_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="raw")
 
 	print("\tbeta_bar")
-	for reperoire_ in repertoire_names_list:
+	for repertoire_ in repertoire_names_list:
 		# for q_index, q in enumerate(list_of_qs):
 		for q in list_of_qs:
-			if "%.3f" % raw_beta_bar[reperoire_][q] == '2.000':print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+			if "%.3f" % raw_beta_bar[repertoire_][q] == '2.000':print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 			else:
 				print("raw_beta_bar incorrect. Exiting...")
 				exit()
 
 	print("\n\n\trho_bar")
-	for reperoire_ in repertoire_names_list:
+	for repertoire_ in repertoire_names_list:
 		# for q_index, q in enumerate(list_of_qs):
 		for q in list_of_qs:
-			if "%.3f" % raw_rho_bar[reperoire_][q] == '0.500':print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+			if "%.3f" % raw_rho_bar[repertoire_][q] == '0.500':print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 			else:
 				print("raw_rho_bar incorrect. Exiting...")
 				exit()
 		
 	print("\n\n\tB_bar")
 	for q in list_of_qs:
-		if "%.3f" % raw_B_bar[q] == '2.000': print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+		if "%.3f" % raw_B_bar[q] == '2.000': print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 		else:
 			print("raw_B_bar incorrect. Exiting...")
 			exit()
 
 	print("\n\n\tR_bar")
 	for q in list_of_qs:
-		if "%.3f" % raw_R_bar[q] == '0.500': print(("\t(%s) q=%.1f\tpass" % (reperoire_, q)))
+		if "%.3f" % raw_R_bar[q] == '0.500': print(("\t(%s) q=%.1f\tpass" % (repertoire_, q)))
 		else:
 			print("raw_R_bar incorrect. Exiting...")
 			exit()
@@ -333,7 +333,10 @@ def read_clone_size_distribution_input(infile):
 	return d
 
 
-def collect_sequences_and_calculate_probability_terms(input_files_list, repertoire_names_list, alpha_or_beta="beta" ):
+# def collect_sequences_and_calculate_probability_terms(input_files_list, repertoire_names_list, alpha_or_beta="beta" ):
+# def collect_sequences_and_calculate_probability_terms(input_files_list, repertoire_names_list, alpha_or_beta="beta", has_similarity_matrix=False, unique_seqs_user=None):
+
+def collect_sequences(input_files_list, repertoire_names_list):
 	"""
 	This function gathers all unique sequences and related probability terms from input_files_list. If there > 1 file in input_files_list, this function also looks for common sequences and counts them once.
 
@@ -342,6 +345,7 @@ def collect_sequences_and_calculate_probability_terms(input_files_list, repertoi
 	- for beta diversity, len(repertoire_names_list) is always 2
 	- for alpha diversity, len(repertoire_names_list) is always 1 (recall that even if we are calculating alpha diversity for two repertoire, each repertoire should be independent)
 	"""
+	
 	seq_to_repertoire_to_count_hash = defaultdict(lambda: defaultdict(int))
 	repertoire_to_total_seqs_hash = defaultdict(int)
 
@@ -353,7 +357,6 @@ def collect_sequences_and_calculate_probability_terms(input_files_list, repertoi
 		else: 
 			seq_to_count_hash = read_species_count_input(input_file)
 
-		# seqs_, counts_ = zip(*seq_to_count_hash.iteritems())
 		seqs_, counts_ = list(zip(*list(seq_to_count_hash.items())))
 
 		"""Find a way to get rid of this step. This is iterating over all seqs a second time. We have already iterated over the seqs/lines when we get seq_to_count_hash. Find a way to combine both"""
@@ -365,7 +368,7 @@ def collect_sequences_and_calculate_probability_terms(input_files_list, repertoi
 
 	if len(list_of_lists_of_seqs_from_all_repertoires) == 2:
 		unique_seqs_from_all_repertoires = []
-				
+		
 		"""identify common seqs from both repertoires and put them at the very end of the the combined unqiue seqs list.
 	   	We do this to make sure that we know where the common seqs are in the overall (combined) repertoire"""
 
@@ -386,27 +389,35 @@ def collect_sequences_and_calculate_probability_terms(input_files_list, repertoi
 		unique_seqs_from_all_repertoires = list_of_lists_of_seqs_from_all_repertoires[0]
 
 	else:
-		print("More than two repertoires detected. Exiting...")
+		print("More than two repertoires detected.\nExiting...")
 		exit()
+	
+	return unique_seqs_from_all_repertoires
 
+
+def calculate_probability_terms(unique_seqs_from_all_repertoires, repertoire_names_list, alpha_or_beta="beta"):
 	"""Get probability terms"""
-
 	repertoire_to_seq_prob_hash = defaultdict(array) # key=repertoire; value=list of probability of (each unique seq in S) according to this repertoire. Note that there will be many zeroes because reperoires are almost disjoint
 	for repertoire_name in repertoire_names_list:
 		total_seqs_for_this_repertoire = float(repertoire_to_total_seqs_hash[repertoire_name])
 		
-		P_bar_dot_j = array([seq_to_repertoire_to_count_hash[s][repertoire_name] for s in unique_seqs_from_all_repertoires])/total_seqs_for_this_repertoire
+		P_bar_dot_j = array([seq_to_repertoire_to_count_hash[s][repertoire_name] for s in unique_seqs_from_all_repertoires]) / total_seqs_for_this_repertoire
 
 		repertoire_to_seq_prob_hash[repertoire_name] = P_bar_dot_j
 
+	print("repertoire_to_seq_prob_hash = ", dict(repertoire_to_seq_prob_hash))
+
 	if alpha_or_beta=="alpha":
-		return unique_seqs_from_all_repertoires, repertoire_to_seq_prob_hash
+		return repertoire_to_seq_prob_hash
 	
 	else: 
 		w  = [1., 1.]
 		p = [ dot(i, weights) for i in zip(*list(repertoire_to_seq_prob_hash.values())) ]
 
-		return unique_seqs_from_all_repertoires, repertoire_to_seq_prob_hash, p
+		for i in zip(*list(repertoire_to_seq_prob_hash.values())):
+			print("i = ", i)
+
+		return repertoire_to_seq_prob_hash, p
 
 
 def get_similarity_matrix(unique_seqs_from_all_repertoires, cost, method, distance_to_similarity_list):
@@ -450,7 +461,7 @@ def calculate_rho_bar_term(P_bar_ij, relative_uniqueness_i, q):
 	return rho_bar_term_for_i
 
 
-def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None):
+def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None, custom_function=None):
 	
 	"""Returns a tuple of rho and beta bars for individual repertoires"""
 
@@ -463,8 +474,7 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 			weighted_rho_bar_for_all_qs[repertoire_][q] = 0.
 			weighted_beta_bar_for_all_qs[repertoire_][q] = 0.
 
-	"""
-	rho_bar_for_all_repertoires_for_all_qs is the list of lists which will be returned by this function
+	"""rho_bar_for_all_repertoires_for_all_qs is the list of lists which will be returned by this function
 	We will initialise this list by 0. and do the summation as we go over sequences for every repertoire, for every q
 .	
 	The exception here is when q=1. We cannot initialise this by 0. because here we use prod and not sum. We will initialise this by 1.
@@ -475,8 +485,7 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 
 	if rho_bar_for_all_repertoires_for_all_qs = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
 	and list_of_qs = [0., 0.5, 1.]
-	then rho_bar_for_all_repertoires_for_all_qs = [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]]
-	"""
+	then rho_bar_for_all_repertoires_for_all_qs = [[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]]"""
 
 	if 1.0 in list_of_qs:
 		for repertoire_ in repertoire_names_list:
@@ -484,8 +493,14 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 			beta_bar_for_all_repertoires_for_all_qs[repertoire_][1.0] = 1.
 
 	if diversity_type=="class":
+		"""Calculate or use custom similarity matrix"""
+
 		if has_similarity_matrix: 
 			similarity_matrix = user_similarity_matrix
+		
+		elif custom_function:
+			similarity_list = custom_function(unique_seqs_from_this_repertoires)
+
 		else:
 			similarity_matrix = get_similarity_matrix(unique_seqs_from_all_repertoires, cost, method, distance_to_similarity_list)
 
@@ -507,7 +522,10 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 
 	elif diversity_type == "class":
 		detailed_terms = defaultdict(lambda: defaultdict(list))
+		print("similarity_matrix = ", similarity_matrix)
 		for ii, similarity_ in enumerate(similarity_matrix):
+			print(ii, similarity_)
+			print("p=",p)
 			numerator_ = dot(similarity_, p)
 
 			for repertoire_ in repertoire_names_list:
@@ -533,11 +551,9 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 			if q != 1.:
 				rho_bar_for_all_repertoires_for_all_qs[repertoire_][q] = rho_bar_for_all_repertoires_for_all_qs[repertoire_][q]**(1./(1-q))
 
-	"""
-	We double-checked that this is true: you do indeed just take the reciprocal of rho_bar, as opposed to reciprocals of the arguments of the sum. This is both explicitly stated in Table 2 in Reeve et al and calculated by Rohit to prove that Table 2 is correct
+	"""We double-checked that this is true: you do indeed just take the reciprocal of rho_bar, as opposed to reciprocals of the arguments of the sum. This is both explicitly stated in Table 2 in Reeve et al and calculated by Rohit to prove that Table 2 is correct
 
-	Note that B_bar is the average of beta_bars. It is NOT 1./R_bar. R_bar is the average of rho_bars
-	"""	
+	Note that B_bar is the average of beta_bars. It is NOT 1./R_bar. R_bar is the average of rho_bars"""	
 
 	for repertoire_no, repertoire_ in enumerate(repertoire_names_list):
 		for q in list_of_qs:
@@ -557,11 +573,11 @@ def calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoi
 
 
 
-def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=False, user_similarity_matrix=None):
+def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=False, user_similarity_matrix=None, custom_function=None, unique_seqs_user=None):
 
 	all_alpha_diversity_results = {}
 
-	""" which repertoires to calculate alpha diversity for? """
+	"""Which repertoires to calculate alpha diversity for?"""
 
 	for ii, alpha_diversity_repertoire in enumerate(alpha_diversity_repertoires_list):
 
@@ -569,13 +585,16 @@ def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, inpu
 
 		recon_file_for_this_repertoire = recon_files_list[ii]
 
-		unique_seqs_from_this_repertoires, repertoire_to_seq_prob_hash = collect_sequences_and_calculate_probability_terms(input_file_for_this_repertoire.split(), alpha_diversity_repertoire.split(), alpha_or_beta=alpha_or_beta )
+		unique_seqs_from_this_repertoires = collect_sequences(input_file_for_this_repertoire.split(), alpha_diversity_repertoire.split(), has_similarity_matrix=has_similarity_matrix, 
+			unique_seqs_user=unique_seqs_user):
 
+		repertoire_to_seq_prob_hash = calculate_probability_terms(unique_seqs_from_this_repertoires, alpha_diversity_repertoire.split(), alpha_or_beta="beta"):
+		
 		if verbose: print(("number of unique seqs from repertoire %s:\t%i" % (alpha_diversity_repertoire, len(unique_seqs_from_this_repertoires))))
 
-		p = np.empty(len(unique_seqs_from_this_repertoires), )
+		p = np.empty(len(unique_seqs_from_this_repertoires), ) # dummy p
 
-		class_alpha_diversity_results_list, raw_alpha_diversity_results_list = calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
+		class_alpha_diversity_results_list, raw_alpha_diversity_results_list = calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix, custom_function=custom_function)
 
 		all_alpha_diversity_results[alpha_diversity_repertoire] = ( class_alpha_diversity_results_list, raw_alpha_diversity_results_list )
 		
@@ -587,19 +606,28 @@ def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, inpu
 	return all_alpha_diversity_results
 
 
-def generate_final_beta_diversity_output(input_files_list, repertoire_names_list, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None, unit_test=False):
-	"""
-	Returns all the beta diversity parameters: B_bar, R_bar, beta_bar, rho_bar, raw_B_bar, raw_R_bar, raw_beta_bar, raw_rho_bar
-	"""
-	unique_seqs_from_all_repertoires, repertoire_to_seq_prob_hash, p = collect_sequences_and_calculate_probability_terms(input_files_list, repertoire_names_list)
+def generate_final_beta_diversity_output(input_files_list, repertoire_names_list, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None, unit_test=False, custom_function=None, unique_seqs_user=None):
 	
-	if verbose: 
-		print(("number of unique seqs from both repertoires:\t%i" % len(unique_seqs_from_all_repertoires)))
+	"""Returns all the beta diversity parameters: B_bar, R_bar, beta_bar, rho_bar, raw_B_bar, raw_R_bar, raw_beta_bar, raw_rho_bar"""
+	
+	# if has_similarity_matrix:
+	# 	unique_seqs_from_all_repertoires = unique_seqs_user
+	# 	repertoire_to_seq_prob_hash = 
+
+	if has_similarity_matrix:
+		unique_seqs_from_all_repertoires = unique_seqs_user=None
+
+	else:
+		unique_seqs_from_all_repertoires = collect_sequences(input_files_list, repertoire_names_list)
+	
+	repertoire_to_seq_prob_hash, p = calculate_probability_terms(unique_seqs_from_all_repertoires, repertoire_names_list, alpha_or_beta="beta")
+	
+	if verbose: print(("number of unique seqs from both repertoires:\t%i" % len(unique_seqs_from_all_repertoires)))
 
 	"""Functional Diversity"""
 	if verbose: print("\nfunctional beta diversity")
 
-	rho_bar_for_all_repertoires_for_all_qs, beta_bar_for_all_repertoires_for_all_qs, weighted_rho_bar_for_all_qs, weighted_beta_bar_for_all_qs = calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type=diversity_type, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
+	rho_bar_for_all_repertoires_for_all_qs, beta_bar_for_all_repertoires_for_all_qs, weighted_rho_bar_for_all_qs, weighted_beta_bar_for_all_qs = calculate_rho_and_beta_bar_for_repertoire(p, repertoire_names_list, repertoire_to_seq_prob_hash, unique_seqs_from_all_repertoires, list_of_qs, weights, cost, method, distance_to_similarity_list, diversity_type=diversity_type, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix, custom_function=None)
 
 	B_bar, R_bar = [ {} for i in range(2) ]
 	beta_bar, rho_bar  = [ defaultdict(lambda: defaultdict(list)) for i in range(2) ]
@@ -630,40 +658,58 @@ def generate_final_beta_diversity_output(input_files_list, repertoire_names_list
 	return B_bar, R_bar, beta_bar, rho_bar
 
 
-
 """MAIN"""
 
 if __name__ == '__main__':
 
-	parser = ArgumentParser(description="""
-	diversity_with_similarity: Calculate diversity with similarity for any qD
-	""", formatter_class=RawDescriptionHelpFormatter)
+	parser = ArgumentParser(description="""Calculate diversity for any qD""", formatter_class=RawTextHelpFormatter)
 	pa = parser.add_argument
 
 	pa("-ar", "--alpha_diversity_repertoires", type=str, default=None, help="Alpha diversity will be calculated for both repertoires by default")
-	pa("-clone_distribution_in_file", "--clone_distribution_in_file", action='store_true', help='input file is of the form clone_size tab number_of_clones of that size') # This is the same as -c option in recon
+	
 	pa("-cost", "--cost", type=float, default= 0.55, help="similarity = cost**edit_distance. Cost must be <= 1. If cost=0 then every pair of seqs is maximally different. If cost=1 then all seqs are identical") 
-	pa("-if", "--input_files", type=str, default="", help="filenames for the repertoire_names in the seq \t count format. This is usually the sampled sequences")
-	pa("-ma", "--master_filename_alpha", type=str, default="alpha_diversity_master_file.txt", help="this is the master alpha output file")
-	pa("-mb", "--master_filename_beta", type=str, default="beta_diversity_master_file.txt", help="this is the master beta output file")
-	pa("-method", "--method", type=str, default="fast_similarity", help="method to calculate similarity. Option: fast_similarity or old_similarity")
-	pa("-mo", "--mode", type=str, default="beta", help="acceptable values: alpha, beta, alpha_and_beta")
-	pa("-mod", "--master_output_dir", type=str, default=None, help="this is where the master output file(s) beta_diversity_master_file.txt/alpha_diversity_master_file.txt will be written")
-	pa("-qs", "--list_of_qs", type=str, default= "[0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5, 7., 7.5, 8., 8.5, 9., 9.5, 10., inf]", help="list of qs for which diversity is to be calculated")
-	pa("-rn", "--repertoire_names", type=str, default="", help="names of repertoires being evaluated (>=1)")
+	
+	pa("-clone_distribution_in_file", "--clone_distribution_in_file", action='store_true', help='Input file is of the form clone_size tab number_of_clones of that size') # This is the same as -c option in recon
+	
+	pa("-if", "--input_files", type=str, default="", help="Filenames for the repertoire_names in the seq \t count format. This is usually the sampled sequences")
+	
+	pa("-ma", "--master_filename_alpha", type=str, default="lpha_diversity_master_file.txt", help="This is the master alpha output file")
+	
+	pa("-mb", "--master_filename_beta", type=str, default="beta_diversity_master_file.txt", help="This is the master beta output file")
+	
+	pa("-method", "--method", type=str, default="fast_similarity", help="Method to calculate similarity. Option: fast_similarity or old_similarity")
+	
+	pa("-mo", "--mode", type=str, default="beta", help="Acceptable values: alpha, beta, alpha_and_beta")
+	
+	pa("-mod", "--master_output_dir", type=str, default=None, help="This is where the master output file(s) beta_diversity_master_file.txt/alpha_diversity_master_file.txt will be written")
+	
+	pa("-qs", "--list_of_qs", type=str, default= "[0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5, 7., 7.5, 8., 8.5, 9., 9.5, 10., inf]", help="List of qs for which diversity is to be calculated")
+	
 	pa("-rf", "--recon_files", type=str, default="", help="filenames for the repertoire_names in the seq \t count format. This is usually the file with all sequences")
-	pa("-sim", "--which_similarity", type=str, default= 'fast_similarity', help="choose between fast_similarity and old_similarity")
+
+	pa("-rn", "--repertoire_names", type=str, default="", help="names of repertoires being evaluated (>=1)")
+		
+	pa("-sim", "--which_similarity", type=str, default= 'fast_similarity', help="Choose between fast_similarity and old_similarity")
+	
 	pa("-u", "--unit_test", action="store_true", help="run unit tests")
-	pa("-v", "--verbose", action="store_true", help="be verbose")
+
+	pa("-uq", "--unique_seqs_user", type=str, default=None, help="Text file that has species in the same order as used for calculating --user_similarity_matrix_file/-Z. See manual for details and example.")
+
+	pa("-v", "--verbose", action="store_true", help="Be verbose")
+	
 	pa("-weights", "--weights", type=str, default= "[0.5, 0.5]", help="list of weights for r1 and r2")
-	pa("-Z", "--user_similarity_matrix_file", type=str, default=None, help="Numpy file (.npy format) containing user similarity matrix")
+	
+	pa("-Z", "--user_similarity_matrix_file", type=str, default=None, help="File containing user similarity matrix. Two options:\ni\tNumpy (.npy) matrix file\nii\tComma-separated(.csv) file with rows/columns corresponding to input matrix\nSee manual for details.")
+
+	pa("-ZF", "--user_similarity_function", type=str, default=None, help="Comma-separated string of length 2 in the order:\ni\tName of the python function used to calculate all-against-all similarity. This function \n\t- %s %s accept a list of species for all-against-all similarity is to be calculated\n\t- %s %s return the complete similarity matrix\nii\tPath to the .py file that contains this function\nSee manual for details and an example." % ( "\u0332".join("must"),  "\u0332".join("only"), "\u0332".join("must"),  "\u0332".join("only") ) )
+
 
 	args = parser.parse_args()
 	globals().update(vars(args))
 
-	#			  		#
-	# *---UNIT TEST---* #
-	#			  		#
+	#			  			  #
+	# *---START UNIT TEST---* #
+	#			  			#
 
 	if unit_test:
 
@@ -681,11 +727,10 @@ if __name__ == '__main__':
 		EEE		1
 		FFF 	1
 		"""
-
+		
 		input_files_list = ['unit_test_1.txt', 'unit_test_2.txt']
 		repertoire_names_list = ['unit_test_file_1', 'unit_test_file_2']
 		list_of_qs = [0., 1., 2., 3, 3.5]
-		# list_of_qs = [3.]
 		weights = [0.5, 0.5]
 		beta_diversity=True
 		
@@ -727,16 +772,23 @@ if __name__ == '__main__':
 		run_alpha_unit_test(input_files_list, repertoire_names_list, list_of_qs, distance_to_similarity_list, has_similarity_matrix=True, user_similarity_matrix=similarity_matrix_for_alpha_diversity, unit_test=unit_test)
 
 		exit()
-		"""End unit test"""
+		#			  			#
+		# *---END UNIT TEST---* #
+		#			  			#
 
-	date_ = strftime("%Y-%m-%d %H:%M:%S")
+
+	"""Start main code"""
+
+	date_=strftime("%Y-%m-%d %H:%M:%S")
 	print(""); print((strftime("%Y-%m-%d %H:%M:%S"))); print("")
-	start_time = time()
+	start_time=time()
 
+	"""Initialize"""
 	alpha_diversity=False
 	beta_diversity=False
 	has_similarity_matrix=False
 	user_similarity_matrix=None
+	custom_similarity_function=None
 
 	if mode=="alpha": alpha_diversity=True
 	elif mode=="beta": beta_diversity=True
@@ -747,12 +799,60 @@ if __name__ == '__main__':
 		print("Specify mode. Exiting...")
 		exit()
 
+	if user_similarity_matrix_file and user_similarity_function:
+		print("Either supply a similarity matrix file (--user_similarity_matrix_file), or point to a function (--user_similarity_function) that will calculate it on the fly. See help and manual for details.\nExiting...")
+		exit()
+
+	
+	"""If the user supplies a simiarity matrix in a npy/csv file"""
 	if user_similarity_matrix_file:
 		print("User similarity matrix file:%s" % user_similarity_matrix_file)
+		if not unique_seqs_user:
+			print("Provide a text file (--unique_seqs_user/-uq) with the species in the order used to generate %s.See manual for details.\nExiting...")
+			exit()
+		
 		has_similarity_matrix=True
-		user_similarity_matrix = np.load(user_similarity_matrix_file)
 
-	# Set output files
+		_, file_extension = os.path.splitext(user_similarity_matrix_file)
+
+		if file_extension==".npy":
+			user_similarity_matrix = np.load(user_similarity_matrix_file)
+		elif file_extension==".csv":
+			user_similarity_matrix=[]
+			with open(user_similarity_matrix_file) as f:
+				for line in f:
+					line=str.strip(line, "\n").split(",")
+		else:
+			print("-Z/--user_similarity_matrix_file should be .npy or .csv. See help and manual for details.\nExiting...")
+			exit()
+
+		"""Check if the input matrix is square"""
+		try:
+			assert all (len (row_) == len (user_similarity_matrix) for row_ in user_similarity_matrix)
+		except AssertionError:
+			print("Similarity matrix in user_similarity_matrix_file (%s) is not a square matrix. All against all similarity matrix should be square.\nExiting..." % user_similarity_matrix_file)
+			exit()
+		
+		"""Make all values float"""
+		user_similarity_matrix = np.array(user_similarity_matrix, dtype=np.float32)
+
+	"""If the user wishes to use cutsom function in morty"""
+	if user_similarity_function:
+		user_function_, function_file_path = user_similarity_function.split(",")
+
+		if len(function_file_path.split("/")) == 1:
+			function_filename=function_file_path
+
+		else:
+			sys.path.insert(0, function_file_path.split("/"))
+			function_filename=function_file_path.split("/")[-1]
+
+		function_filename_, _ = os.path.splitext(function_filename)
+		# custom_similarity_module = importlib.import_module(function_filename_.user_function_)
+		custom_similarity_module = importlib.import_module(function_filename_)
+		custom_similarity_function = getattr(user_function_)
+	
+	"""Set output files"""
 	if not master_output_dir:
 		print("Provide path to master output files (--master_output_dir/-mod)\nExiting...")
 		exit()
@@ -784,7 +884,7 @@ if __name__ == '__main__':
 	if not alpha_diversity_repertoires: alpha_diversity_repertoires_list = repertoire_names_list
 	else: alpha_diversity_repertoires_list = alpha_diversity_repertoires.split(",")
 
-	"""get column names for d numbers"""
+	"""Get column names for d numbers"""
 	col_names_for_qs = []
 	for q in [str(i) for i in list_of_qs]:
 		col_name = "%sDs %sD" % (q, q)
@@ -808,14 +908,12 @@ if __name__ == '__main__':
 	if beta_diversity: screen_out += "# BETA DIVERSITY\n# ---------------\n# status\t%s\n# repertoires\t%s\n\n" % ( beta_diversity, ", ".join(repertoire_names_list) )
 
 	if verbose: print(screen_out)
-
+	
+	distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
 	if alpha_diversity:
 		if verbose: print("Calculating alpha diversity")
 
-		distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
-		
-		all_alpha_diversity_results = generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
-
+		all_alpha_diversity_results = generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, input_files_list, repertoire_names_list, recon_files_list, list_of_qs, distance_to_similarity_list, alpha_or_beta="alpha", has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix, custom_function=custom_similarity_function, unique_seqs_user=None)
 
 		outstr_alpha = ''
 		for repertoire_ in alpha_diversity_repertoires_list:
@@ -852,20 +950,17 @@ if __name__ == '__main__':
 		else: 
 			list_of_qs_beta = list_of_qs
 		
-		distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
-		
-		functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, list_of_qs_beta, cost, method, distance_to_similarity_list, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix)
+		functional_B_bar, functional_R_bar, functional_beta_bar, functional_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, list_of_qs_beta, cost, method, distance_to_similarity_list, has_similarity_matrix=has_similarity_matrix, user_similarity_matrix=user_similarity_matrix, custom_function=custom_similarity_function, unique_seqs_user=unique_seqs_user)
 
 		functional_B_bar = { str(q)+"Ds" : "%.3e"%functional_B_bar[q] for q in list(functional_B_bar.keys()) }
 		functional_R_bar = { str(q)+"Ds" : "%.3e"%functional_R_bar[q] for q in list(functional_R_bar.keys()) }
 
-		raw_B_bar, raw_R_bar, raw_beta_bar, raw_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, list_of_qs_beta, cost, method, distance_to_similarity_list, diversity_type="raw")
+		raw_B_bar, raw_R_bar, raw_beta_bar, raw_rho_bar = generate_final_beta_diversity_output(input_files_list, repertoire_names_list, list_of_qs_beta, cost, method, distance_to_similarity_list, diversity_type="raw", unique_seqs_user=unique_seqs_user)
 
 		raw_B_bar = {str(q)+"D" : "%.3e"%raw_B_bar[q] for q in list(raw_B_bar.keys())}
 		raw_R_bar = {str(q)+"D" : "%.3e"%raw_R_bar[q] for q in list(raw_R_bar.keys())}
 
-
-		""" first do B_bar and R_bar """
+		"""First do B_bar and R_bar"""
 		outstr_B = ''; outstr_R = ''
 
 		repertoire_1, repertoire_2 = repertoire_names_list
