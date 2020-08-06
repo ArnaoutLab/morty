@@ -13,7 +13,8 @@ from numpy.random import choice as np_choice
 from operator import itemgetter, mul
 from os.path import expanduser, isfile, join
 from random import random, choice, shuffle, randint
-from simlib import stochastic_similarity, set_cython_seed, fast_similarity
+# from simlib import set_cython_seed, fast_similarity
+from simlib import set_cython_seed
 from string import *
 from sys import argv, exit
 from time import time, sleep, strftime
@@ -64,7 +65,6 @@ def get_distance_to_similarity_list(cost, method):
 def calculate_similarity(seq_1, seq_2, cost, method, distance_to_similarity_list):
 	
 	"""Type : fast_similarity vs. old_similarity"""
-	
 	if method=="fast_similarity":
 		return distance_to_similarity_list[distance(seq_1, seq_2)]
 	
@@ -90,17 +90,11 @@ def calculate_similarity(seq_1, seq_2, cost, method, distance_to_similarity_list
 
 def calculate_alpha_diversity(unique_seqs_from_this_repertoires, p, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, recon_file_for_this_repertoire, list_of_qs, cost, method, distance_to_similarity_list, diversity_type="class", has_similarity_matrix=False, user_similarity_matrix=None, custom_function=None):
 
-	if has_similarity_matrix:
-		similarity_list = user_similarity_matrix
-	
-	elif custom_function:
-		similarity_list = custom_function(unique_seqs_from_this_repertoires)
-
-	else:
-		similarity_list = get_similarity_matrix(unique_seqs_from_this_repertoires, cost, method, distance_to_similarity_list)
+	if has_similarity_matrix: similarity_list = user_similarity_matrix
+	elif custom_function: similarity_list = custom_function(unique_seqs_from_this_repertoires)
+	else: similarity_list = get_similarity_matrix(unique_seqs_from_this_repertoires, cost, method, distance_to_similarity_list)
 
 	zpi_list = calculate_zpi_list(similarity_list, unique_seqs_from_this_repertoires, repertoire_to_seq_prob_hash, alpha_diversity_repertoire, p)
-
 	P_bar_dot_repertoire = repertoire_to_seq_prob_hash[alpha_diversity_repertoire]
 
 	""" Class diversity """
@@ -333,9 +327,6 @@ def read_clone_size_distribution_input(infile):
 	return d
 
 
-# def collect_sequences_and_calculate_probability_terms(input_files_list, repertoire_names_list, alpha_or_beta="beta" ):
-# def collect_sequences_and_calculate_probability_terms(input_files_list, repertoire_names_list, alpha_or_beta="beta", has_similarity_matrix=False, unique_seqs_user=None):
-
 def collect_sequences(input_files_list, repertoire_names_list):
 	"""
 	This function gathers all unique sequences and related probability terms from input_files_list. If there > 1 file in input_files_list, this function also looks for common sequences and counts them once.
@@ -395,7 +386,7 @@ def collect_sequences(input_files_list, repertoire_names_list):
 	return unique_seqs_from_all_repertoires
 
 
-def calculate_probability_terms(unique_seqs_from_all_repertoires, repertoire_names_list, alpha_or_beta="beta"):
+def calculate_probability_terms(unique_seqs_from_all_repertoires, repertoire_names_list, seq_to_repertoire_to_count_hash, alpha_or_beta="beta") :# ******
 	"""Get probability terms"""
 	repertoire_to_seq_prob_hash = defaultdict(array) # key=repertoire; value=list of probability of (each unique seq in S) according to this repertoire. Note that there will be many zeroes because reperoires are almost disjoint
 	for repertoire_name in repertoire_names_list:
@@ -585,10 +576,13 @@ def generate_final_alpha_diversity_output(alpha_diversity_repertoires_list, inpu
 
 		recon_file_for_this_repertoire = recon_files_list[ii]
 
-		unique_seqs_from_this_repertoires = collect_sequences(input_file_for_this_repertoire.split(), alpha_diversity_repertoire.split(), has_similarity_matrix=has_similarity_matrix, 
-			unique_seqs_user=unique_seqs_user):
+		if has_similarity_matrix:
+			unique_seqs_from_this_repertoires=unique_seqs_user
 
-		repertoire_to_seq_prob_hash = calculate_probability_terms(unique_seqs_from_this_repertoires, alpha_diversity_repertoire.split(), alpha_or_beta="beta"):
+		else:
+			unique_seqs_from_this_repertoires = collect_sequences(input_file_for_this_repertoire.split(), alpha_diversity_repertoire.split())
+
+		repertoire_to_seq_prob_hash = calculate_probability_terms(unique_seqs_from_this_repertoires, alpha_diversity_repertoire.split(), alpha_or_beta="beta")
 		
 		if verbose: print(("number of unique seqs from repertoire %s:\t%i" % (alpha_diversity_repertoire, len(unique_seqs_from_this_repertoires))))
 
@@ -615,7 +609,7 @@ def generate_final_beta_diversity_output(input_files_list, repertoire_names_list
 	# 	repertoire_to_seq_prob_hash = 
 
 	if has_similarity_matrix:
-		unique_seqs_from_all_repertoires = unique_seqs_user=None
+		unique_seqs_from_all_repertoires = unique_seqs_user
 
 	else:
 		unique_seqs_from_all_repertoires = collect_sequences(input_files_list, repertoire_names_list)
@@ -693,17 +687,17 @@ if __name__ == '__main__':
 	
 	pa("-u", "--unit_test", action="store_true", help="run unit tests")
 
-	pa("-uq", "--unique_seqs_user", type=str, default=None, help="Text file that has species in the same order as used for calculating --user_similarity_matrix_file/-Z. See manual for details and example.")
+	pa("-uq", "--unique_seqs_user", type=str, default=None, help="Text file that has species in the same order as used for calculating --user_similarity_matrix_file/-Z. This is the column/row header for the --user_similarity_matrix_file/-Z. Ensure that the two headers are in the same order. See manual for details and example.")
 
 	pa("-v", "--verbose", action="store_true", help="Be verbose")
 	
 	pa("-weights", "--weights", type=str, default= "[0.5, 0.5]", help="list of weights for r1 and r2")
 	
-	pa("-Z", "--user_similarity_matrix_file", type=str, default=None, help="File containing user similarity matrix. Two options:\ni\tNumpy (.npy) matrix file\nii\tComma-separated(.csv) file with rows/columns corresponding to input matrix\nSee manual for details.")
+	pa("-Z", "--user_similarity_matrix_file", type=str, default=None, help="File containing user similarity matrix. Two options:\ni\tNumpy (.npy) matrix file\nii\tComma-separated (.csv) file with rows/columns corresponding to input matrix.\nMust also supply a file with the column/row header (note these headers must be identical; i.e., species must be in the same order in both row and column dimensions); this is supplied as -uq/--unique_seqs_user.\nSee manual for details and example.")
 
-	pa("-ZF", "--user_similarity_function", type=str, default=None, help="Comma-separated string of length 2 in the order:\ni\tName of the python function used to calculate all-against-all similarity. This function \n\t- %s %s accept a list of species for all-against-all similarity is to be calculated\n\t- %s %s return the complete similarity matrix\nii\tPath to the .py file that contains this function\nSee manual for details and an example." % ( "\u0332".join("must"),  "\u0332".join("only"), "\u0332".join("must"),  "\u0332".join("only") ) )
+	pa("-ZF", "--user_similarity_function", type=str, default=None, help="Comma-separated string of length 2 in the order:\ni\tName of the python function used to calculate all-against-all similarity. This function \n\t- %s %s accept a list of species for all-against-all similarity is to be calculated\n\t- %s %s return the complete similarity matrix\nii\tPath to the .py file from which this function will be imported\nSee manual for details and an example." % ( "\u0332".join("must"),  "\u0332".join("only"), "\u0332".join("must"),  "\u0332".join("only") ) )
 
-
+	# default="fastsim,/Users/.../simlib.pyx"
 	args = parser.parse_args()
 	globals().update(vars(args))
 
@@ -714,7 +708,7 @@ if __name__ == '__main__':
 	if unit_test:
 
 		"""
-		Make two files unit_test_1.txt and unit_test_2.txt
+		Make two files unit_test_1.txt and unit_test_2.txt - on the fly?
 
 		cat unit_test_1.txt
 		AAA 	1
@@ -747,24 +741,6 @@ if __name__ == '__main__':
 			[0.5, 1.,  0.5],
 			[0.5, 0.5, 1. ] ])
 
-		"""
-		similarity_matrix_for_beta_diversity = array([ 
-			[1.,  0.2, 0.2, 0.9, 0.9, 0.9], 
-			[0.2, 1.,  0.2, 0.9, 0.9, 0.9], 
-			[0.2, 0.2, 1.,  0.9, 0.9, 0.9], 
-			[0.9, 0.9, 0.9, 1,   0.2, 0.2], 
-			[0.9, 0.9, 0.9, 0.2, 1,   0.2], 
-			[0.9, 0.9, 0.9, 0.2, 0.2, 1  ] ])
-
-		similarity_matrix_for_beta_diversity = array([ 
-			[1.,  0., 0., 1., 1., 1.], 
-			[0., 1.,  0., 1., 1., 1.], 
-			[0., 0., 1.,  1., 1., 1.], 
-			[1., 1., 1., 1,   0., 0.], 
-			[1., 1., 1., 0., 1,   0.], 
-			[1., 1., 1., 0., 0., 1  ] ])
-		"""
-
 		distance_to_similarity_list = get_distance_to_similarity_list(cost, method)
 
 		run_beta_unit_test(input_files_list, repertoire_names_list, list_of_qs, cost, method, distance_to_similarity_list, has_similarity_matrix=True, user_similarity_matrix=similarity_matrix_for_beta_diversity, unit_test=unit_test)
@@ -786,8 +762,8 @@ if __name__ == '__main__':
 	"""Initialize"""
 	alpha_diversity=False
 	beta_diversity=False
-	has_similarity_matrix=False
-	user_similarity_matrix=None
+	has_similarity_matrix=False # for just whether we have a similarity matrix or not, regardless of whether it comes from user or is generated in some other way
+	user_similarity_matrix=None # for when similarity matrix comes from user
 	custom_similarity_function=None
 
 	if mode=="alpha": alpha_diversity=True
@@ -817,6 +793,7 @@ if __name__ == '__main__':
 
 		if file_extension==".npy":
 			user_similarity_matrix = np.load(user_similarity_matrix_file)
+		
 		elif file_extension==".csv":
 			user_similarity_matrix=[]
 			with open(user_similarity_matrix_file) as f:
@@ -830,13 +807,14 @@ if __name__ == '__main__':
 		try:
 			assert all (len (row_) == len (user_similarity_matrix) for row_ in user_similarity_matrix)
 		except AssertionError:
-			print("Similarity matrix in user_similarity_matrix_file (%s) is not a square matrix. All against all similarity matrix should be square.\nExiting..." % user_similarity_matrix_file)
+			print("Similarity matrix in user_similarity_matrix_file (%s) is not a square matrix. All-against-all similarity matrix should be square.\nExiting..." % user_similarity_matrix_file)
 			exit()
 		
 		"""Make all values float"""
 		user_similarity_matrix = np.array(user_similarity_matrix, dtype=np.float32)
 
-	"""If the user wishes to use cutsom function in morty"""
+
+	"""If the user wishes to use custom function in morty"""
 	if user_similarity_function:
 		user_function_, function_file_path = user_similarity_function.split(",")
 
