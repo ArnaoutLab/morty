@@ -700,6 +700,11 @@ if __name__ == '__main__':
 
 	date_=strftime("%Y-%m-%d %H:%M:%S")
 	print(""); print((strftime("%Y-%m-%d %H:%M:%S")))
+	
+	if input_files =="":
+		print("\nProvide input\nExiting...")
+		exit()
+	
 	start_time=time()
 	run_id = ''.join(choice(ascii_letters + digits) for i in range(5))
 	print(("run_id:\t%s\n" % run_id))
@@ -730,7 +735,7 @@ if __name__ == '__main__':
 
 	"""If the user supplies a simiarity matrix in a npy/csv file"""
 	if user_similarity_matrix_file:
-		print("%sUsing user-generated similarity matrix.\n" % "\u0332".join("NOTE"))
+		print("%s: Using user-generated similarity matrix.\n" % "\u0332".join("NOTE"))
 		print("User-generated similarity matrix file:\t%s" % user_similarity_matrix_file)
 		print("User-generated unique species order file:\t%s" % unique_species_user)
 	
@@ -794,6 +799,7 @@ if __name__ == '__main__':
 	community_names_list = community_names.split(',')
 	if mode=="beta" and len(community_names_list) !=2:
 		print("")
+
 	input_files_list = input_files.split(',')
 
 	set_cython_seed(randint(0, 2147483647)) # This is cython RAND_MAX
