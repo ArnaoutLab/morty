@@ -300,14 +300,15 @@ def process_input(iris_csv_file, species_to_count_file, unique_species_file):
 			id_, sepal_length, sepal_width = str.strip(line).split(",")
 			out_str = "%s_%s_%s" % (id_, sepal_length, sepal_width)
 			processed_input_list.append((out_str))
-			g.write("%s\t1\n" % id_)
-			h.write("%s\n" % id_)
+			g.write("%s\t1\n" % out_str)
+			h.write("%s\n" % out_str)
 	return processed_input_list
 iris_input_list = process_input('Examples/iris_input.csv', 'Examples/iris_input_species_to_count.txt', 'Examples/iris_input_uniq_species.txt')
 ```
 In the context of this example, we define similarity between two species as the euclidean distance between sepal length and width, and write an example function to that end.
 ```
 from scipy.spatial import distance
+import numpy as np
 
 def get_euclidean_distance(species_list):
 	"""This function calculates all-against-all euclidean distance 
