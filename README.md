@@ -152,8 +152,11 @@ Output is added to the output file line by line. Six new lines in total will be 
 
 #### 3.4 Examples ####
 
-This section will demonstrate usage of various command-line options on some use-cases of Morty using example data. Note that when Morty is run (irrespective of the ```mode```), both types of diversity metric—with and without similarity (also referred to as “class” and “species/raw” diversity)—are calculated. The example commands for data generation and Morty execution can also be found in ```morty/example.ipynb```\
-Note: Example data files generated here should exist in ```Example/``` for a fresh download. Running this code will overwrite them.
+This section will demonstrate usage of various command-line options on some use-cases of Morty using example data. Note that when Morty is run (irrespective of the ```mode```), both types of diversity metric—with and without similarity (also referred to as “class” and “species/raw” diversity)—are calculated.
+The following should be noted when running ```morty.py``` on this example data:
+1. Example input data files generated here should exist in ```Examples/``` for a fresh download, and running this code will overwrite them. \
+2. The output alpha and beta diversity files are not included in ```Examples/```, and the user should run the below commands to generate the output.\
+3. The ```run_id``` is unique for each new morty instance; i.e., you are (extremely) unlikely to get exactly the same ```run_id```s in your runs as in the examples below.
 
 3.4.1 *Run Morty using default similarity function*
 
