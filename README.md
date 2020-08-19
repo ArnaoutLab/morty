@@ -412,4 +412,4 @@ Hill, M.O. (1973). Diversity and Evenness: A Unifying Notation and Its Consequen
 Jost, L. (2007). Partitioning diversity into independent alpha and beta components. Ecology 88, 2427–2439.\
 Kaplinsky, J., and Arnaout, R. (2016). Robust estimates of overall immune-repertoire diversity from high-throughput measurements on samples. Nat Commun 7, 11881.\
 Leinster, T., and Cobbold, C.A. (2012). Measuring diversity: the importance of species similarity. Ecology 93, 477–489.\
-Reeve, R., Leinster, T., Cobbold, C.A., Thompson, J., Brummitt, N., Mitchell, S.N., and Matthews, L. (2014). How to partition diversity. ArXiv:1404.6520 [q-Bio].\
+Reeve, R., Leinster, T., Cobbold, C.A., Thompson, J., Brummitt, N., Mitchell, S.N., and Matthews, L. (2014). How to partition diversity. ArXiv:1404.6520 [q-Bio].
