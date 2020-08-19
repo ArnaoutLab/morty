@@ -152,8 +152,11 @@ Output is added to the output file line by line. Six new lines in total will be 
 
 #### 3.4 Examples ####
 
-This section will demonstrate usage of various command-line options on some use-cases of Morty using example data. Note that when Morty is run (irrespective of the ```mode```), both types of diversity metric—with and without similarity (also referred to as “class” and “species/raw” diversity)—are calculated. The example commands for data generation and Morty execution can also be found in ```morty/example.ipynb```\
-Note: Example data files generated here should exist in ```Example/``` for a fresh download. Running this code will overwrite them.
+This section will demonstrate usage of various command-line options on some use-cases of Morty using example data. Note that when Morty is run (irrespective of the ```mode```), both types of diversity metric—with and without similarity (also referred to as “class” and “species/raw” diversity)—are calculated.
+The following should be noted when running ```morty.py``` on this example data:
+1. Example input data files generated here should exist in ```Examples/``` for a fresh download, and running this code will overwrite them. \
+2. The output alpha and beta diversity files are not included in ```Examples/```, and the user should run the below commands to generate the output.\
+3. The ```run_id``` is unique for each new morty instance; i.e., you are (extremely) unlikely to get exactly the same ```run_id```s in your runs as in the examples below.
 
 3.4.1 *Run Morty using default similarity function*
 
@@ -297,14 +300,15 @@ def process_input(iris_csv_file, species_to_count_file, unique_species_file):
 			id_, sepal_length, sepal_width = str.strip(line).split(",")
 			out_str = "%s_%s_%s" % (id_, sepal_length, sepal_width)
 			processed_input_list.append((out_str))
-			g.write("%s\t1\n" % id_)
-			h.write("%s\n" % id_)
+			g.write("%s\t1\n" % out_str)
+			h.write("%s\n" % out_str)
 	return processed_input_list
 iris_input_list = process_input('Examples/iris_input.csv', 'Examples/iris_input_species_to_count.txt', 'Examples/iris_input_uniq_species.txt')
 ```
 In the context of this example, we define similarity between two species as the euclidean distance between sepal length and width, and write an example function to that end.
 ```
 from scipy.spatial import distance
+import numpy as np
 
 def get_euclidean_distance(species_list):
 	"""This function calculates all-against-all euclidean distance 
